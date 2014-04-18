@@ -51,6 +51,7 @@ Options:
   -o, --output= dir     : place output files in specified directory (default
                           current)
   -s, --sections	: preserve sections
+  -H, --no-headings	: do not show headings
   -h, --help            : display this help and exit
 """
 
@@ -77,6 +78,11 @@ keepLinks = False
 # Whether to transform sections into HTML
 #
 keepSections = False
+
+##
+# Whether to show headings in the text output
+#
+showHeadings = True
 
 ##
 # Recognize only these namespaces
@@ -118,9 +124,10 @@ version = '2.5'
 
 def WikiDocument(out, id, title, text):
     url = get_url(id, prefix)
-    header = '<doc id="%s" url="%s" title="%s">\n' % (id, url, title)
+    header = '<doc id="%s" url="%s" title="%s">' % (id, url, title)
     # Separate header from text with a newline.
-    header += title + '\n'
+    if showHeadings:
+        header += '\n' + title + '\n'
     header = header.encode('utf-8')
     text = clean(text)
     footer = "\n</doc>"
@@ -460,19 +467,20 @@ def compact(text):
             lev = len(m.group(1))
             if keepSections:
                 page.append("<h%d>%s</h%d>" % (lev, title, lev))
-            if title and title[-1] not in '!?':
-                title += '.'
-            headers[lev] = title
-            # drop previous headers
-            for i in headers.keys():
-                if i > lev:
-                    del headers[i]
-            emptySection = True
+            if showHeadings:
+                if title and title[-1] not in '!?':
+                    title += '.'
+                headers[lev] = title
+                # drop previous headers
+                for i in headers.keys():
+                    if i > lev:
+                        del headers[i]
+                emptySection = True
             continue
         # Handle page title
         if line.startswith('++'):
             title = line[2:-2]
-            if title:
+            if title and showHeadings:
                 if title[-1] not in '!?':
                     title += '.'
                 page.append(title)
@@ -618,12 +626,12 @@ def show_usage(script_name):
 minFileSize = 200 * 1024
 
 def main():
-    global keepLinks, keepSections, prefix, acceptedNamespaces
+    global keepLinks, keepSections, showHeadings, prefix, acceptedNamespaces
     script_name = os.path.basename(sys.argv[0])
 
     try:
         long_opts = ['help', 'compress', 'bytes=', 'basename=', 'links', 'ns=', 'sections', 'output=', 'version']
-        opts, args = getopt.gnu_getopt(sys.argv[1:], 'cb:hln:o:B:sv', long_opts)
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 'cb:hHln:o:B:sv', long_opts)
     except getopt.GetoptError:
         show_usage(script_name)
         sys.exit(1)
@@ -642,6 +650,8 @@ def main():
             keepLinks = True
         elif opt in ('-s', '--sections'):
             keepSections = True
+        elif opt in ('-H', '--no-headings'):
+            showHeadings = False
         elif opt in ('-B', '--base'):
             prefix = arg
         elif opt in ('-b', '--bytes'):
