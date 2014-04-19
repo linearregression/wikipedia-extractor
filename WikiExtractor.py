@@ -52,6 +52,7 @@ Options:
                           current)
   -s, --sections	: preserve sections
   -H, --no-headings	: do not show headings
+  -x, --output-xml      : attempt to produce a syntactically correct XML file
   -h, --help            : display this help and exit
 """
 
@@ -83,6 +84,11 @@ keepSections = False
 # Whether to show headings in the text output
 #
 showHeadings = True
+
+##
+# Whether to try hard to output a syntactically correct XML
+#
+outputXML = False
 
 ##
 # Recognize only these namespaces
@@ -437,6 +443,14 @@ def clean(text):
     # This can't be done before since it may remove tags
     text = preformatted.sub('', text)
 
+    if outputXML:
+        # Remove all remaining HTML tags, loosely
+        text = re.sub(r'<\s*/?\w+[^>]+>', '', text)
+        # Remove harmful characters
+        text = text.replace('<', '')
+        text = text.replace('>', '')
+        text = text.replace('&', '&amp;')
+
     # Cleanup text
     text = text.replace('\t', ' ')
     text = spaces.sub(' ', text)
@@ -626,12 +640,12 @@ def show_usage(script_name):
 minFileSize = 200 * 1024
 
 def main():
-    global keepLinks, keepSections, showHeadings, prefix, acceptedNamespaces
+    global keepLinks, keepSections, showHeadings, prefix, acceptedNamespaces, outputXML
     script_name = os.path.basename(sys.argv[0])
 
     try:
-        long_opts = ['help', 'compress', 'bytes=', 'basename=', 'links', 'ns=', 'sections', 'output=', 'version']
-        opts, args = getopt.gnu_getopt(sys.argv[1:], 'cb:hHln:o:B:sv', long_opts)
+        long_opts = ['help', 'compress', 'bytes=', 'basename=', 'links', 'ns=', 'sections', 'output=', 'version', 'output-xml']
+        opts, args = getopt.gnu_getopt(sys.argv[1:], 'cb:hHln:o:B:svx', long_opts)
     except getopt.GetoptError:
         show_usage(script_name)
         sys.exit(1)
@@ -652,6 +666,8 @@ def main():
             keepSections = True
         elif opt in ('-H', '--no-headings'):
             showHeadings = False
+        elif opt in ('-x', '--output-xml'):
+            outputXML = True
         elif opt in ('-B', '--base'):
             prefix = arg
         elif opt in ('-b', '--bytes'):
