@@ -63,7 +63,21 @@ import urllib
 import re
 import bz2
 import os.path
+import logging
 from htmlentitydefs import name2codepoint
+
+
+import logging
+from logging import Formatter
+from logging.handlers import RotatingFileHandler
+from logging import INFO, WARN, WARNING, ERROR, FATAL, DEBUG, CRITICAL
+
+
+logger = logging.setLogger(__name__)
+logger.setLevel(logging.ERROR)
+handle = RotatingFileHandler('wikiextractor.log', maxBytes=10000, backupCount=3)
+handle.setLevel(log_level)
+handler.setFormatter(Formatter('%(asctime)s %(levelname)s %(module)s %(lineno)s: %(message)s '))
 
 ### PARAMS ####################################################################
 
@@ -539,6 +553,12 @@ class OutputSplitter:
         self.path_name = path_name
         self.out_file = self.open_next_file()
 
+    def __enter__(self):
+        return self.out_file
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+
     def reserve(self, size):
         cur_file_size = self.out_file.tell()
         if cur_file_size + size > self.max_file_size:
@@ -704,10 +724,12 @@ def main():
 
     if not keepLinks:
         ignoreTag('a')
-
-    output_splitter = OutputSplitter(compress, file_size, output_dir)
-    process_data(sys.stdin, output_splitter)
-    output_splitter.close()
+    try: 
+    	with OutputSplitter(compress, file_size, output_dir) as output_splitter:
+           process_data(sys.stdin, output_splitter)
+    except Exception as e:
+        logger.error('Error with message: {0}', e.message)
+    #output_splitter.close()
 
 if __name__ == '__main__':
     main()
