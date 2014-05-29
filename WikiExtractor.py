@@ -77,8 +77,8 @@ logger = logging.getLogger()
 logger.setLevel(logging.ERROR)
 handler = RotatingFileHandler('wikiextractor.log', maxBytes=10000, backupCount=3)
 handler.setFormatter(Formatter('%(asctime)s %(levelname)s %(module)s %(lineno)s: %(message)s '))
-handleri.addHandler(handler)
-root.setLevel(logging.DEBUG)
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 ### PARAMS ####################################################################
 
@@ -727,7 +727,7 @@ def main():
         ignoreTag('a')
     output_splitter = None 
     try: 
-    	OutputSplitter(compress, file_size, output_dir):
+    	output_splitter = OutputSplitter(compress, file_size, output_dir)
         process_data(sys.stdin, output_splitter)
     except Exception as e:
         print >> sys.stderr, 'Could not create/process splitter: ', str(e)
