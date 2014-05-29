@@ -73,11 +73,12 @@ from logging.handlers import RotatingFileHandler
 from logging import INFO, WARN, WARNING, ERROR, FATAL, DEBUG, CRITICAL
 
 
-logger = logging.setLogger(__name__)
+logger = logging.getLogger()
 logger.setLevel(logging.ERROR)
-handle = RotatingFileHandler('wikiextractor.log', maxBytes=10000, backupCount=3)
-handle.setLevel(log_level)
+handler = RotatingFileHandler('wikiextractor.log', maxBytes=10000, backupCount=3)
 handler.setFormatter(Formatter('%(asctime)s %(levelname)s %(module)s %(lineno)s: %(message)s '))
+handleri.addHandler(handler)
+root.setLevel(logging.DEBUG)
 
 ### PARAMS ####################################################################
 
@@ -724,12 +725,14 @@ def main():
 
     if not keepLinks:
         ignoreTag('a')
+    output_splitter = None 
     try: 
-    	with OutputSplitter(compress, file_size, output_dir) as output_splitter:
-           process_data(sys.stdin, output_splitter)
+    	OutputSplitter(compress, file_size, output_dir):
+        process_data(sys.stdin, output_splitter)
     except Exception as e:
-        logger.error('Error with message: {0}', e.message)
-    #output_splitter.close()
+        print >> sys.stderr, 'Could not create/process splitter: ', str(e)
+        logger.error('Error with message: {0}'.format(str(e)))
+    output_splitter.close()
 
 if __name__ == '__main__':
     main()
